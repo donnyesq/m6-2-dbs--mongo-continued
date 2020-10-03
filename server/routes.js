@@ -10,6 +10,7 @@ const row = ["A", "B", "C", "D", "E", "F", "G", "H"];
 for (let r = 0; r < row.length; r++) {
   for (let s = 1; s < 13; s++) {
     seats[`${row[r]}-${s}`] = {
+      _id: `${row[r]}-${s}`,
       price: 225,
       isBooked: false,
     };
@@ -66,7 +67,7 @@ router.post("/api/book-seat", async (req, res) => {
     };
   }
 
-  await delay(Math.random() * 3000);
+  // await delay(Math.random() * 3000);
 
   const isAlreadyBooked = !!state.bookedSeats[seatId];
   if (isAlreadyBooked) {
