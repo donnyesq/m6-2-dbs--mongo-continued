@@ -1,4 +1,5 @@
 const { MongoClient } = require("mongodb");
+const assert = require("assert");
 
 require("dotenv").config();
 const { MONGO_URI } = process.env;
@@ -8,18 +9,20 @@ const options = {
 };
 
 const getSeats = async (req, res) => {
+  let seats;
   const client = await MongoClient(MONGO_URI, options);
   await client.connect();
   const db = client.db("ticket-booker");
   console.log("connected!");
 
-  const seats = await db
+  await db
     .collection("seats")
     .find()
     .toArray((err, result) => {
       if (result.length > 0) {
         const resultObj = {};
         result.forEach((item) => (resultObj[item._id] = item));
+        seats = resultObj;
         res.status(200).json({
           status: 200,
           seats: resultObj,
@@ -40,36 +43,44 @@ const bookSeat = async (req, res) => {
   const { seatId, creditCard, expiration } = req.body;
   let lastBookingAttemptSucceeded = false;
 
-  // const seat = seats[seatId];
+  const client = await MongoClient(MONGO_URI, options);
 
-  // const isAlreadyBooked = !!seat.isBooked;
-  // if (isAlreadyBooked) {
-  //   return res.status(400).json({
-  //     message: "This seat has already been booked!",
-  //   });
-  // }
+  await client.connect();
+  const db = client.db("ticket-booker");
 
-  // if (!creditCard || !expiration) {
-  //   return res.status(400).json({
-  //     status: 400,
-  //     message: "Please provide credit card information!",
-  //   });
-  // }
+  try {
+    const query = { _id: seatId };
+    const newValues = { $set: { isBooked: "true" } };
+    const r = await db.collection("seats").updateOne(query, newValues);
+    assert.strictEqual(1, r.matchedCount);
+    assert.strictEqual(1, r.modifiedCount);
+    lastBookingAttemptSucceeded = !lastBookingAttemptSucceeded;
 
-  // if (lastBookingAttemptSucceeded) {
-  //   lastBookingAttemptSucceeded = !lastBookingAttemptSucceeded;
+    return res.status(200).json({
+      status: 200,
+      success: true,
+    });
+  } catch (err) {
+    console.log(err.stack);
+    res.status(500).json({ status: 500, data: req.body, message: err.message });
+  }
 
-  //   return res.status(500).json({
-  //     message: "An unknown error has occurred. Please try your request again.",
-  //   });
-  // }
+  client.close();
 
-  // lastBookingAttemptSucceeded = !lastBookingAttemptSucceeded;
+  if (!creditCard || !expiration) {
+    return res.status(400).json({
+      status: 400,
+      message: "Please provide credit card information!",
+    });
+  }
 
-  // return res.status(200).json({
-  //   status: 200,
-  //   success: true,
-  // });
+  if (lastBookingAttemptSucceeded) {
+    lastBookingAttemptSucceeded = !lastBookingAttemptSucceeded;
+
+    return res.status(500).json({
+      message: "An unknown error has occurred. Please try your request again.",
+    });
+  }
 };
 
 module.exports = { getSeats, bookSeat };
