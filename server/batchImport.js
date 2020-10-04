@@ -15,12 +15,11 @@ const seats = [];
 const row = ["A", "B", "C", "D", "E", "F", "G", "H"];
 for (let r = 0; r < row.length; r++) {
   for (let s = 1; s < 13; s++) {
-    let seat;
-    seat = {
-      _id: `${row[r]}-${s}`,
-      price: 225,
-      isBooked: false,
-    };
+    const seat = {};
+    seat["_id"] = `${row[r]}-${s}`;
+    seat.price = 225;
+    seat.isBooked = false;
+
     seats.push(seat);
   }
 }
