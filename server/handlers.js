@@ -40,7 +40,7 @@ const getSeats = async (req, res) => {
 };
 
 const bookSeat = async (req, res) => {
-  const { seatId, creditCard, expiration } = req.body;
+  const { seatId, creditCard, expiration, fullName, email } = req.body;
   let lastBookingAttemptSucceeded = false;
 
   const client = await MongoClient(MONGO_URI, options);
@@ -50,7 +50,7 @@ const bookSeat = async (req, res) => {
 
   try {
     const query = { _id: seatId };
-    const newValues = { $set: { isBooked: "true" } };
+    const newValues = { $set: { isBooked: "true", fullName, email } };
     const r = await db.collection("seats").updateOne(query, newValues);
     assert.strictEqual(1, r.matchedCount);
     assert.strictEqual(1, r.modifiedCount);
